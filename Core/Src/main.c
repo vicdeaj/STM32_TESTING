@@ -60,8 +60,10 @@ static void MX_CAN1_Init(void);
 /* USER CODE BEGIN 0 */
 
 uint8_t received[2];
-uint8_t command[2] = {0x80 | 0x0f ,0};
-uint8_t powerON[2] = {0x0 | 0x20, 0b01110111};
+uint8_t command[2] = {0x43,0x43};
+uint32_t mailbox = 0xFF;
+
+
 
 /* USER CODE END 0 */
 
@@ -109,15 +111,21 @@ int main(void)
   filterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
   filterconfig.SlaveStartFilterBank = 27;  // how many filters to assign to the CAN1 (master can)
 
-  HAL_CAN_ConfigFilter(&hcan1, sFilterConfig);
+  HAL_CAN_ConfigFilter(&hcan1, &filterconfig);
 
   HAL_CAN_Start(&hcan1);
 
-  HAL_CAN_AddTxMessage();
 
-  HAL_Delay(10);
+  CAN_TxHeaderTypeDef TxHeader;
+  TxHeader.StdId = 0x777;
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 2;
 
-  HAL_CAN_GetRxMessage(hcan, RxFifo, pHeader, aData);
+
+  CAN_RxHeaderTypeDef RxHeader;
+
+
 
   /* USER CODE END 2 */
 
@@ -126,7 +134,11 @@ int main(void)
   while (1)
   {
 
+	  HAL_CAN_AddTxMessage(&hcan1, &TxHeader, command, &mailbox);
 
+	  HAL_Delay(10);
+
+	  HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, received);
 
 
 
